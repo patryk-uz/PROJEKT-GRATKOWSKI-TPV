@@ -1,0 +1,54 @@
+KASYNO PRO — GOTOWA WERSJA HTML + CSS + JAVASCRIPT
+
+Nie ma Reacta, ReactDOM, JSX, Babel, npm ani etapu budowania.
+Jedyna biblioteka to klient Supabase do logowania i połączenia z bazą.
+
+PODMIANA
+1. Rozpakuj ZIP.
+2. Na GitHubie wejdź do istniejącego folderu public.
+3. Add file → Upload files.
+4. Przeciągnij ZAWARTOŚĆ public z paczki: index.html, app.js, style.css,
+   _headers oraz folder vendor. Zatwierdź Commit changes.
+   Nie twórz public/public. Nie wgrywaj samego ZIP-a.
+5. Stare vendor/react.js, vendor/react-dom.js i ich LICENSE możesz usunąć.
+   Ta wersja ich nie ładuje. Stare src/app.jsx i pliki Babel też nie są potrzebne.
+6. Poczekaj na zielony status wdrożenia w Cloudflare i naciśnij Ctrl+Shift+R.
+
+BAZA
+NIE URUCHAMIAJ PONOWNIE SQL. Ta wersja używa istniejących casino_wallets,
+casino_rounds, casino_open_wallet i casino_spin utworzonych wcześniej.
+Wynik i saldo nadal oblicza Supabase, nie przeglądarka.
+
+LOGOWANIE
+Strona powinna od razu pokazać formularz, nawet jeśli nie masz jeszcze konta.
+Potrzebne jest konto Supabase Auth z potwierdzonym adresem e-mail.
+To konto gracza — nie konto administratora, którym logujesz się do panelu Supabase.
+Jeśli wysyłka maila rejestracyjnego jest zablokowana, do testu administrator może
+utworzyć użytkownika w Authentication → Users → Add user → Create new user,
+z hasłem minimum 12 znaków i opcją automatycznego potwierdzenia e-maila.
+Rób to wyłącznie dla własnych/zweryfikowanych uczestników. Nie wyłączaj RLS.
+Do publicznej rejestracji skonfiguruj SMTP oraz zabezpieczenie przed botami.
+W Authentication → URL Configuration ustaw aktualny adres strony jako Site URL
+oraz dokładny adres powrotu z końcowym / w Redirect URLs.
+
+CLOUDFLARE
+Build command: puste.
+Deploy command: npx wrangler deploy --name kasyno-pro --assets ./public
+Root directory: /
+Nazwa po --name musi być nazwą Twojego Workera; tutaj kasyno-pro.
+Jeśli wdrożenia już działają z folderem public, nie musisz zmieniać ustawień.
+
+ZACHOWANE FUNKCJE
+Ciemne menu i karty gier, rejestracja/logowanie, wirtualne saldo,
+ruletka z zakładami na kolor, parzystość i numer, historia ostatnich 20 rund.
+Slots pozostaje oznaczone jako „Wkrótce” — pierwotny projekt nie miał tej gry.
+Nie pokazujemy wymyślonych graczy ani cudzych prywatnych sald.
+
+SPRAWDZENIE
+Lokalne testy DOM z prawdziwą biblioteką Supabase i symulowanymi odpowiedziami API:
+logowanie, rejestracja, wylogowanie, odczyt salda/historii, zakład, błędna stawka,
+ponowienie po błędzie sieci z tym samym ID, odtworzenie próby po odświeżeniu,
+komunikat o brakującej bibliotece i bezpieczne wyświetlanie tekstu użytkownika.
+Przeszła kontrola składni JS. Brak importów modułów i zależności od frameworka.
+Nie wykonano logowania na Twoje rzeczywiste konto ani zmian w produkcyjnej bazie.
+Nie jest to gwarancja pełnego bezpieczeństwa ani audyt penetracyjny.

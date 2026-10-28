@@ -1,378 +1,139 @@
-const baza = window.supabase.createClient(
-      "https://tnpvcbdoocdxsepauzdm.supabase.co",
-      "sb_publishable_hcSnixt194jfNd00iaFHEA_0N4IHhzF"
-    );
-  
-import { jsxDEV as _jsxDEV, Fragment as _Fragment } from "react/jsx-dev-runtime";
-const {
-  useState,
-  useEffect,
-  useRef
-} = React;
-const red = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-function Login() {
-  const [email, setEmail] = useState(''),
-    [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false),
-    [message, setMessage] = useState('');
-  async function submit(e, register = false) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setMessage('');
-    try {
-      const {
-        error
-      } = register ? await baza.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: location.origin + '/'
-        }
-      }) : await baza.auth.signInWithPassword({
-        email,
-        password
+/* Zwykły JavaScript. Wynik i saldo rozlicza istniejąca funkcja w Supabase. */
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const status = message => { $('status').textContent = message || ''; };
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+    status('Nie udało się wczytać biblioteki Supabase. Wgraj folder public/vendor z paczki i odśwież stronę.');
+    return;
+  }
+  const client = window.supabase.createClient(
+    'https://tnpvcbdoocdxsepauzdm.supabase.co',
+    'sb_publishable_hcSnixt194jfNd00iaFHEA_0N4IHhzF'
+  );
+  const reds = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+  const labels = {red:'Czerwone',black:'Czarne',even:'Parzyste',odd:'Nieparzyste',number:'Numer'};
+  let user = null, balance = null, pending = null, busy = false, authBusy = false, generation = 0;
+  const key = () => 'casino-pending-' + user.id;
+  const message = error => {
+    const text = error?.message || 'Nie udało się połączyć. Spróbuj ponownie.';
+    if (text.includes('Invalid login credentials')) return 'Niepoprawny e-mail lub hasło.';
+    if (text.includes('Email not confirmed')) return 'Najpierw potwierdź adres e-mail.';
+    if (text.includes('Email address not authorized')) return 'Supabase nie może wysłać wiadomości na ten adres. Administrator musi skonfigurować SMTP lub utworzyć konto testowe w panelu.';
+    if (text.includes('Failed to fetch')) return 'Brak połączenia z Supabase. Sprawdź internet i spróbuj ponownie.';
+    return text;
+  };
+  async function limited(promise) {
+    let timer;
+    try { return await Promise.race([promise,new Promise((_,reject)=>{ timer=setTimeout(()=>reject(new Error('Przekroczono czas oczekiwania na Supabase. Spróbuj ponownie.')),15000); })]); }
+    finally { clearTimeout(timer); }
+  }
+  function controls() {
+    $('bet-fields').disabled = busy || !!pending || balance === null;
+    $('spin').disabled = busy || (balance === null && !pending);
+    $('spin').textContent = busy ? 'Sprawdzam…' : pending ? 'Sprawdź poprzedni zakład' : 'Zakręć';
+    $('refresh').disabled = busy;
+    $('logout').disabled = busy;
+    $('back').disabled = busy;
+    $('login').disabled = authBusy;
+    $('signup').disabled = authBusy;
+  }
+  function showGame(show) { $('menu').hidden = show; $('roulette').hidden = !show; }
+  function renderHistory(rows) {
+    $('history').replaceChildren(); $('empty-history').hidden = rows.length > 0;
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      [new Date(row.played_at).toLocaleString('pl-PL'),labels[row.bet_type] || row.bet_type,row.bet,row.result,row.payout,row.balance_after].forEach(value=>{
+        const td=document.createElement('td');td.textContent=String(value);tr.append(td);
       });
-      if (error) throw error;
-      if (register) setMessage('Sprawdz e-mail i potwierdz konto. Potem zaloguj sie.');
-      setPassword('');
-    } catch (e) {
-      setMessage(e.message || 'Blad polaczenia.');
-    } finally {
-      setBusy(false);
-    }
+      $('history').append(tr);
+    });
   }
-  return /*#__PURE__*/_jsxDEV("section", {
-    style: {
-      maxWidth: 400,
-      margin: 'auto'
-    },
-    children: [/*#__PURE__*/_jsxDEV("h1", {
-      children: "Kasyno Pro"
-    }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
-      children: "Gra na wirtualne zetony. Bez wplat i wyplat pieniedzy."
-    }, void 0, false), /*#__PURE__*/_jsxDEV("form", {
-      onSubmit: submit,
-      style: {
-        display: 'grid',
-        gap: 12
-      },
-      children: [/*#__PURE__*/_jsxDEV("label", {
-        children: ["E-mail ", /*#__PURE__*/_jsxDEV("input", {
-          type: "email",
-          required: true,
-          autoComplete: "email",
-          value: email,
-          onChange: e => setEmail(e.target.value)
-        }, void 0, false)]
-      }, void 0, true), /*#__PURE__*/_jsxDEV("label", {
-        children: ["Haslo ", /*#__PURE__*/_jsxDEV("input", {
-          type: "password",
-          required: true,
-          minLength: 12,
-          autoComplete: "current-password",
-          value: password,
-          onChange: e => setPassword(e.target.value)
-        }, void 0, false)]
-      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-        disabled: busy,
-        children: "Zaloguj sie"
-      }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-        type: "button",
-        disabled: busy,
-        onClick: e => {
-          if (e.currentTarget.form.reportValidity()) submit(e, true);
-        },
-        children: "Zaloz konto"
-      }, void 0, false)]
-    }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
-      role: "status",
-      children: message
-    }, void 0, false)]
-  }, void 0, true);
-}
-function Game({
-  session
-}) {
-  const [balance, setBalance] = useState(null),
-    [history, setHistory] = useState([]);
-  const [bet, setBet] = useState('10'),
-    [type, setType] = useState('red'),
-    [number, setNumber] = useState('0');
-  const [message, setMessage] = useState(''),
-    [busy, setBusy] = useState(false),
-    [page, setPage] = useState('menu');
-  const [pending, setPending] = useState(null);
-  const locked = useRef(false);
-  const storageKey = 'casino-pending-' + session.user.id;
-  async function refresh() {
-    const {
-      data,
-      error
-    } = await baza.rpc('casino_open_wallet');
-    if (error) throw error;
-    setBalance(Number(data));
-    const h = await baza.from('casino_rounds').select('request_id,played_at,bet,bet_type,result,payout,balance_after').order('played_at', {
-      ascending: false
-    }).limit(20);
-    if (h.error) throw h.error;
-    setHistory(h.data);
+  async function refresh(expected = generation) {
+    const result = await limited(client.rpc('casino_open_wallet'));
+    if (expected !== generation || !user) return;
+    if (result.error) throw result.error;
+    balance = Number(result.data); $('balance').textContent = String(balance); controls();
+    const history = await limited(client.from('casino_rounds').select('request_id,played_at,bet,bet_type,result,payout,balance_after').order('played_at',{ascending:false}).limit(20));
+    if (expected !== generation || !user) return;
+    if (history.error) throw history.error;
+    renderHistory(history.data || []);
   }
-  useEffect(() => {
+  async function changeSession(session) {
+    const next = session?.user || null;
+    if (user && next?.id === user.id) return;
+    user=next;generation++;balance=null;pending=null;busy=false;
+    $('balance').textContent='—';$('account').textContent=user?.email || '';
+    $('auth-panel').hidden=!!user;$('game-panel').hidden=!user;$('result').textContent='';
+    renderHistory([]);showGame(false);status('');controls();
+    if (!user) return;
+    const expected=generation;
     try {
-      const saved = JSON.parse(localStorage.getItem(storageKey));
-      if (saved && typeof saved.p_request_id === 'string') {
-        setPending(saved);
-        setPage('Ruletka');
-        setMessage('Poprzednia proba wymaga sprawdzenia. Kliknij Sprawdz poprzedni zaklad.');
-      }
-    } catch (e) {
-      setMessage('Nie mozna odczytac poprzedniej proby.');
-    }
-    refresh().catch(e => setMessage(e.message));
-  }, []);
-  async function spin() {
-    if (locked.current) return;
-    const amount = Number(bet),
-      chosen = Number(number);
-    if (!pending && (!Number.isSafeInteger(amount) || amount < 1 || amount > 1000 || amount > balance)) {
-      setMessage('Podaj stawke 1-1000 zetonow, nie wieksza niz saldo.');
-      return;
-    }
-    if (!pending && type === 'number' && (!Number.isInteger(chosen) || chosen < 0 || chosen > 36)) {
-      setMessage('Wybierz numer 0-36.');
-      return;
-    }
-    locked.current = true;
-    setBusy(true);
-    let req = pending;
+      const saved=JSON.parse(localStorage.getItem(key()) || 'null');
+      if(saved && typeof saved.p_request_id==='string') {pending=saved;showGame(true);status('Poprzedni zakład wymaga sprawdzenia. Kliknij „Sprawdź poprzedni zakład”.');}
+    } catch (_) {status('Nie można odczytać pamięci poprzednich prób. Upewnij się, że przeglądarka pozwala zapisywać dane strony.');}
+    controls();
+    try {await refresh(expected);} catch(e) {if(expected===generation)status(message(e));}
+  }
+  async function authenticate(register) {
+    if(authBusy || !$('auth-form').reportValidity()) return;
+    authBusy=true;controls();status('Łączenie…');
     try {
-      if (!req) {
-        req = {
-          p_request_id: crypto.randomUUID(),
-          p_bet: amount,
-          p_type: type,
-          p_number: type === 'number' ? chosen : null
-        };
-        // Zapis przed wyslaniem: odswiezenie strony nie powoduje ponownego obciazenia.
-        localStorage.setItem(storageKey, JSON.stringify(req));
-        setPending(req);
+      const credentials={email:$('email').value.trim(),password:$('password').value};
+      const result=await limited(register
+        ? client.auth.signUp({...credentials,options:{emailRedirectTo:location.origin+'/'}})
+        : client.auth.signInWithPassword(credentials));
+      if(result.error) throw result.error;
+      $('password').value='';
+      if(result.data?.session) await changeSession(result.data.session);
+      else status(register ? 'Sprawdź pocztę i potwierdź adres e-mail. Potem zaloguj się.' : 'Sprawdź dane logowania.');
+    } catch(e) {status(message(e));}
+    finally {authBusy=false;controls();}
+  }
+  async function spin(event) {
+    event.preventDefault(); if(busy || !user) return;
+    const bet=Number($('bet').value), type=$('bet-type').value, number=Number($('number').value);
+    if(!pending && (!Number.isSafeInteger(bet)||bet<1||bet>1000||balance===null||bet>balance)) {status('Stawka musi wynosić 1–1000 całych żetonów i nie przekraczać salda.');return;}
+    if(!pending && type==='number' && (!Number.isInteger(number)||number<0||number>36)) {status('Wybierz numer od 0 do 36.');return;}
+    const expected=generation, storageKey=key();busy=true;controls();status('Rozliczanie zakładu…');
+    try {
+      if(!pending) {
+        const request={p_request_id:crypto.randomUUID(),p_bet:bet,p_type:type,p_number:type==='number'?number:null};
+        // Zachowaj identyfikator PRZED wysłaniem. W razie utraty odpowiedzi ponawiamy tę samą rundę.
+        localStorage.setItem(storageKey,JSON.stringify(request)); pending=request;
       }
-      const {
-        data,
-        error
-      } = await baza.rpc('casino_spin', req);
-      if (error) {
-        // Odpowiedz PostgreSQL oznacza odrzucenie transakcji. Blad transportu jest niejednoznaczny.
-        if (error.code && (/^[0-9A-Z]{5}$/.test(error.code) || error.code.startsWith('PGRST'))) {
-          localStorage.removeItem(storageKey);
-          setPending(null);
+      const result=await limited(client.rpc('casino_spin',pending));
+      if(expected!==generation) return;
+      if(result.error) {
+        // Błąd PostgreSQL oznacza wycofanie transakcji. Przy błędzie sieci zachowaj próbę.
+        if(result.error.code && (/^[0-9A-Z]{5}$/.test(result.error.code)||result.error.code.startsWith('PGRST'))) {
+          localStorage.removeItem(storageKey);pending=null;
         }
-        throw error;
+        throw result.error;
       }
-      localStorage.removeItem(storageKey);
-      setPending(null);
-      const color = data.result === 0 ? 'zielony' : red.includes(data.result) ? 'czerwony' : 'czarny';
-      setBalance(Number(data.balance_after));
-      setMessage(`Wynik: ${data.result} (${color}). Wyplata: ${data.payout} zetonow. Zmiana salda: ${data.payout - data.bet}.`);
-      try {
-        await refresh();
-      } catch (e) {
-        setMessage(m => m + ' Nie udalo sie odswiezyc historii. Kliknij Odswiez.');
-      }
-    } catch (e) {
-      setMessage((e.message || 'Blad sieci.') + ' Jesli proba jest oczekujaca, sprawdz ja ponownie tym samym przyciskiem.');
-    } finally {
-      locked.current = false;
-      setBusy(false);
-    }
+      const row=result.data;
+      localStorage.removeItem(storageKey);pending=null;
+      balance=Number(row.balance_after);$('balance').textContent=String(balance);
+      const color=row.result===0?'zielony':reds.includes(row.result)?'czerwony':'czarny';
+      $('result').textContent=`Wynik: ${row.result} (${color}). Wypłata: ${row.payout} żetonów. Zmiana salda: ${row.payout-row.bet}.`;
+      status('');
+      try {await refresh(expected);} catch(_) {status('Runda została rozliczona, ale nie udało się odświeżyć historii. Kliknij „Odśwież”.');}
+    } catch(e) {if(expected===generation)status(message(e)+(pending?' Kliknij „Sprawdź poprzedni zakład”, aby sprawdzić tę samą rundę bez ponownego obciążenia.':''));}
+    finally {if(expected===generation){busy=false;controls();}}
   }
-  return /*#__PURE__*/_jsxDEV("main", {
-    style: {
-      width: 'min(850px,94vw)',
-      padding: '24px 0'
-    },
-    children: [/*#__PURE__*/_jsxDEV("header", {
-      children: [/*#__PURE__*/_jsxDEV("h1", {
-        children: "Kasyno Pro"
-      }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
-        children: "Wirtualne zetony — bez wartosci pienieznej."
-      }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
-        children: ["Zalogowany: ", session.user.email]
-      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-        disabled: busy,
-        onClick: async () => {
-          const {
-            error
-          } = await baza.auth.signOut();
-          if (error) setMessage(error.message);
-        },
-        children: "Wyloguj"
-      }, void 0, false), /*#__PURE__*/_jsxDEV("h2", {
-        children: ["Saldo: ", balance === null ? 'Ladowanie…' : balance + ' zetonow']
-      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-        disabled: busy,
-        onClick: () => refresh().catch(e => setMessage(e.message)),
-        children: "Odswiez saldo i historie"
-      }, void 0, false)]
-    }, void 0, true), page === 'menu' ? /*#__PURE__*/_jsxDEV("div", {
-      className: "grid",
-      children: [/*#__PURE__*/_jsxDEV("button", {
-        className: "card",
-        onClick: () => setPage('Ruletka'),
-        children: "Ruletka"
-      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-        className: "card",
-        children: "Slots — wkrotce"
-      }, void 0, false)]
-    }, void 0, true) : /*#__PURE__*/_jsxDEV("section", {
-      children: [/*#__PURE__*/_jsxDEV("h2", {
-        children: "Ruletka"
-      }, void 0, false), /*#__PURE__*/_jsxDEV("fieldset", {
-        disabled: busy || !!pending || balance === null,
-        style: {
-          display: 'grid',
-          gap: 12
-        },
-        children: [/*#__PURE__*/_jsxDEV("label", {
-          children: ["Stawka ", /*#__PURE__*/_jsxDEV("input", {
-            type: "number",
-            min: "1",
-            max: "1000",
-            step: "1",
-            value: bet,
-            onChange: e => setBet(e.target.value)
-          }, void 0, false)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("label", {
-          children: ["Zaklad ", /*#__PURE__*/_jsxDEV("select", {
-            value: type,
-            onChange: e => setType(e.target.value),
-            children: [/*#__PURE__*/_jsxDEV("option", {
-              value: "red",
-              children: "Czerwone (2x)"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
-              value: "black",
-              children: "Czarne (2x)"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
-              value: "even",
-              children: "Parzyste (2x)"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
-              value: "odd",
-              children: "Nieparzyste (2x)"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
-              value: "number",
-              children: "Numer (36x)"
-            }, void 0, false)]
-          }, void 0, true)]
-        }, void 0, true), type === 'number' && /*#__PURE__*/_jsxDEV("label", {
-          children: ["Numer ", /*#__PURE__*/_jsxDEV("input", {
-            type: "number",
-            min: "0",
-            max: "36",
-            step: "1",
-            value: number,
-            onChange: e => setNumber(e.target.value)
-          }, void 0, false)]
-        }, void 0, true)]
-      }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
-        children: "Wyplata zawiera stawke. Zero przegrywa zaklady na kolor i parzystosc."
-      }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-        disabled: busy || balance === null,
-        onClick: spin,
-        children: busy ? 'Sprawdzam…' : pending ? 'Sprawdz poprzedni zaklad' : 'Zakrec'
-      }, void 0, false), ' ', /*#__PURE__*/_jsxDEV("button", {
-        disabled: busy,
-        onClick: () => setPage('menu'),
-        children: "Wroc do menu"
-      }, void 0, false)]
-    }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
-      role: "status",
-      style: {
-        color: '#facc15'
-      },
-      children: message
-    }, void 0, false), /*#__PURE__*/_jsxDEV("h2", {
-      children: "Twoje ostatnie 20 rund"
-    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-      style: {
-        overflowX: 'auto'
-      },
-      children: [/*#__PURE__*/_jsxDEV("table", {
-        style: {
-          width: '100%',
-          textAlign: 'left'
-        },
-        children: [/*#__PURE__*/_jsxDEV("thead", {
-          children: /*#__PURE__*/_jsxDEV("tr", {
-            children: [/*#__PURE__*/_jsxDEV("th", {
-              children: "Czas"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("th", {
-              children: "Stawka"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("th", {
-              children: "Wynik"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("th", {
-              children: "Wyplata"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("th", {
-              children: "Saldo po rundzie"
-            }, void 0, false)]
-          }, void 0, true)
-        }, void 0, false), /*#__PURE__*/_jsxDEV("tbody", {
-          children: history.map(r => /*#__PURE__*/_jsxDEV("tr", {
-            children: [/*#__PURE__*/_jsxDEV("td", {
-              children: new Date(r.played_at).toLocaleString('pl-PL')
-            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
-              children: r.bet
-            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
-              children: r.result
-            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
-              children: r.payout
-            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
-              children: r.balance_after
-            }, void 0, false)]
-          }, r.request_id, true))
-        }, void 0, false)]
-      }, void 0, true), history.length === 0 && /*#__PURE__*/_jsxDEV("p", {
-        children: "Nie masz jeszcze zapisanych rund."
-      }, void 0, false)]
-    }, void 0, true)]
-  }, void 0, true);
-}
-function App() {
-  const [session, setSession] = useState(undefined),
-    [error, setError] = useState('');
-  useEffect(() => {
-    let active = true;
-    const {
-      data: {
-        subscription
-      }
-    } = baza.auth.onAuthStateChange((event, s) => {
-      if (active) setSession(s);
-    });
-    baza.auth.getSession().then(({
-      data,
-      error
-    }) => {
-      if (active) {
-        if (error) setError(error.message);
-        setSession(data.session);
-      }
-    });
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-  if (session === undefined) return /*#__PURE__*/_jsxDEV("p", {
-    children: "Ladowanie…"
-  }, void 0, false);
-  return /*#__PURE__*/_jsxDEV(_Fragment, {
-    children: [error && /*#__PURE__*/_jsxDEV("p", {
-      role: "alert",
-      children: error
-    }, void 0, false), session ? /*#__PURE__*/_jsxDEV(Game, {
-      session: session
-    }, session.user.id, false) : /*#__PURE__*/_jsxDEV(Login, {}, void 0, false)]
-  }, void 0, true);
-}
-ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/_jsxDEV(App, {}, void 0, false));
+  $('auth-form').addEventListener('submit',event=>{event.preventDefault();authenticate(false);});
+  $('signup').addEventListener('click',()=>authenticate(true));
+  $('open-roulette').addEventListener('click',()=>showGame(true));
+  $('back').addEventListener('click',()=>showGame(false));
+  $('bet-type').addEventListener('change',()=>{$('number-label').hidden=$('bet-type').value!=='number';});
+  $('bet-form').addEventListener('submit',spin);
+  $('refresh').addEventListener('click',async()=>{try {status('');await refresh();}catch(e){status(message(e));}});
+  $('logout').addEventListener('click',async()=>{try {const {error}=await limited(client.auth.signOut());if(error)throw error;await changeSession(null);}catch(e){status(message(e));}});
+  // Nie wykonuj zapytań Supabase wewnątrz callbacku Auth (blokada sesji).
+  let authEventSeen=false;
+  client.auth.onAuthStateChange((event,session)=>{authEventSeen=true;setTimeout(()=>changeSession(session).catch(e=>status(message(e))),0);});
+  limited(client.auth.getSession()).then(({data,error})=>{
+    if(error)throw error;
+    if(!authEventSeen)return changeSession(data.session);
+  }).catch(e=>{$('auth-panel').hidden=false;status(message(e));});
+})();
