@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kasyno Pro</title>
-  <link rel="stylesheet" href="/style.css?v=roulette3">
+  <link rel="stylesheet" href="/style.css?v=roulette4">
   <script defer src="/vendor/supabase.js"></script>
-  <script defer src="/app.js?v=roulette3"></script>
+  <script defer src="/app.js?v=roulette4"></script>
 </head>
 <body>
 <main>
@@ -41,5 +41,14 @@
     <section class="panel history"><h2>Twoje ostatnie 20 rund</h2><div class="table-wrap"><table><thead><tr><th>Czas</th><th>Zakład</th><th>Stawka</th><th>Wynik</th><th>Wypłata</th><th>Saldo po rundzie</th></tr></thead><tbody id="history"></tbody></table></div><p id="empty-history" class="muted">Nie masz jeszcze zapisanych rund.</p></section>
   </section>
 </main>
+<div id="roulette-overlay" class="roulette-overlay" role="dialog" aria-modal="true" aria-labelledby="roulette-overlay-title" hidden>
+  <div id="roulette-overlay-card" class="roulette-overlay-card">
+    <div id="roulette-overlay-icon" class="roulette-overlay-icon" aria-hidden="true"></div>
+    <p id="roulette-overlay-kicker" class="roulette-overlay-kicker"></p>
+    <h2 id="roulette-overlay-title"></h2>
+    <p id="roulette-overlay-detail"></p>
+    <button id="roulette-overlay-close" type="button">Kontynuuj</button>
+  </div>
+</div>
 </body>
 </html>

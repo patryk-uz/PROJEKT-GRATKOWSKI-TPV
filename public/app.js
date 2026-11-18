@@ -74,13 +74,45 @@
     stopRouletteSound();
     if (!soundEnabled) return;
     if (won) {
-      [523.25, 659.25, 783.99].forEach((frequency, index) => {
-        playTone(frequency, 0.22, 0.07, 'triangle', index * 0.09);
+      [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5].forEach((frequency, index) => {
+        playTone(frequency, index >= 3 ? 0.42 : 0.28, 0.075, index % 2 ? 'triangle' : 'square', index * 0.11);
       });
+      playTone(1046.5, 0.9, 0.035, 'sine', 0.62);
     } else {
-      playTone(180, 0.22, 0.055, 'sine');
-      playTone(135, 0.28, 0.045, 'sine', 0.16);
+      playTone(220, 0.32, 0.06, 'sawtooth');
+      playTone(174.61, 0.38, 0.055, 'triangle', 0.22);
+      playTone(130.81, 0.55, 0.065, 'sine', 0.48);
     }
+  }
+
+  function showRouletteResult(row) {
+    const won = Number(row.payout) > 0;
+    const overlay = $('roulette-overlay');
+    const card = $('roulette-overlay-card');
+    const payout = Number(row.payout);
+    const bet = Number(row.bet);
+    const profit = payout - bet;
+    card.classList.remove('win', 'loss');
+    card.classList.add(won ? 'win' : 'loss');
+    $('roulette-overlay-icon').textContent = won ? '🏆' : '💔';
+    $('roulette-overlay-kicker').textContent = won ? 'Zwycięstwo!' : 'Przegrana';
+    $('roulette-overlay-title').textContent = won ? 'WYGRAŁEŚ' : 'SPRÓBUJ PONOWNIE';
+    $('roulette-overlay-detail').textContent =
+      `Wynik: ${row.result} · ${won ? `Wygrana: ${profit} żetonów` : `Strata: ${bet} żetonów`} · Saldo: ${row.balance_after}`;
+    card.querySelectorAll('.roulette-confetti').forEach(element => element.remove());
+    if (won) {
+      const colors = ['#facc15','#22c55e','#38bdf8','#f472b6','#fb7185'];
+      for (let index = 0; index < 28; index++) {
+        const confetti = document.createElement('i');
+        confetti.className = 'roulette-confetti';
+        confetti.style.setProperty('--x', `${Math.random() * 100}%`);
+        confetti.style.setProperty('--duration', `${1.4 + Math.random() * 1.1}s`);
+        confetti.style.setProperty('--delay', `${Math.random() * 0.45}s`);
+        confetti.style.background = colors[index % colors.length];
+        card.append(confetti);
+      }
+    }
+    overlay.hidden = false;
   }
 
   function updateSoundButton() {
@@ -267,7 +299,9 @@
       localStorage.removeItem(storageKey);pending=null;
       balance=Number(row.balance_after);$('balance').textContent=String(balance);
       await animateRoulette(row.result);
-      playResultSound(Number(row.payout) > Number(row.bet));
+      const won = Number(row.payout) > 0;
+      playResultSound(won);
+      showRouletteResult(row);
       const color=row.result===0?'zielony':reds.includes(row.result)?'czerwony':'czarny';
       $('result').textContent=`Wynik: ${row.result} (${color}). Wypłata: ${row.payout} żetonów. Zmiana salda: ${row.payout-row.bet}.`;
       status('');
@@ -287,6 +321,15 @@
     updateSoundButton();
     if(soundEnabled){ensureAudio();playTone(523.25,0.08,0.04,'triangle');}
     else stopRouletteSound();
+  });
+  $('roulette-overlay-close').addEventListener('click',()=>{
+    $('roulette-overlay').hidden=true;
+  });
+  $('roulette-overlay').addEventListener('click',event=>{
+    if(event.target === $('roulette-overlay')) $('roulette-overlay').hidden=true;
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape' && !$('roulette-overlay').hidden) $('roulette-overlay').hidden=true;
   });
   $('refresh').addEventListener('click',async()=>{try {status('');await refresh();}catch(e){status(message(e));}});
   $('logout').addEventListener('click',async()=>{try {const {error}=await limited(client.auth.signOut());if(error)throw error;await changeSession(null);}catch(e){status(message(e));}});
