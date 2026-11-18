@@ -317,11 +317,11 @@
       }
       const row=result.data;
       localStorage.removeItem(storageKey);pending=null;
-      balance=Number(row.balance_after);$('balance').textContent=String(balance);
       await animateRoulette(row.result);
       const won = Number(row.payout) > Number(row.bet ?? bet);
       playResultSound(won);
       showRouletteResult(row, bet);
+      balance=Number(row.balance_after);$('balance').textContent=String(balance);
       const color=row.result===0?'zielony':reds.includes(row.result)?'czerwony':'czarny';
       $('result').textContent=`Wynik: ${row.result} (${color}). Wypłata: ${row.payout} żetonów. Zmiana salda: ${row.payout-row.bet}.`;
       status('');
