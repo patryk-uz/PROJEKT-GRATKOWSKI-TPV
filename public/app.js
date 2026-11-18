@@ -40,22 +40,54 @@
   }
 
   async function animateRoulette(result) {
+    const stage = document.querySelector('.roulette-stage');
     const wheel = $('roulette-wheel');
+    const ball = $('roulette-ball');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const index = europeanOrder.indexOf(Number(result));
     if (index < 0) return;
     const segment = 360 / europeanOrder.length;
     const normalized = ((wheelRotation % 360) + 360) % 360;
     const targetNormalized = (((-index * segment) % 360) + 360) % 360;
     const align = (targetNormalized - normalized + 360) % 360;
-    const target = wheelRotation + 5 * 360 + align;
+    const target = wheelRotation + (reducedMotion ? align : 5 * 360 + align);
+    stage.classList.remove('result-winner');
+    [...document.querySelectorAll('.roulette-number')].forEach(element => element.classList.remove('is-winner'));
+    stage.classList.add('is-spinning');
+    const duration = reducedMotion ? 350 : 2800;
+    const ballFrames = [];
+    if (reducedMotion) {
+      ballFrames.push({ transform: 'rotate(0deg) translateY(-104px)' });
+    } else {
+      for (let step = 0; step <= 36; step++) {
+        const progress = step / 36;
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const angle = -eased * 7 * 360;
+        const radius = 104 - progress * 40;
+        ballFrames.push({ transform: `rotate(${angle}deg) translateY(${-radius}px)` });
+      }
+    }
+    ball.style.opacity = '1';
+    const ballAnimation = ball.animate(
+      ballFrames,
+      { duration, easing: 'cubic-bezier(.16,.72,.18,1)', fill: 'forwards' }
+    );
     const animation = wheel.animate(
       [{ transform: `rotate(${wheelRotation}deg)` }, { transform: `rotate(${target}deg)` }],
-      { duration: 2400, easing: 'cubic-bezier(.12,.68,.08,1)', fill: 'forwards' }
+      { duration, easing: 'cubic-bezier(.12,.68,.08,1)', fill: 'forwards' }
     );
-    await animation.finished.catch(() => {});
+    await Promise.all([animation.finished.catch(() => {}), ballAnimation.finished.catch(() => {})]);
     wheelRotation = target;
     wheel.style.transform = `rotate(${wheelRotation}deg)`;
     animation.cancel();
+    ballAnimation.cancel();
+    ball.style.opacity = '0';
+    stage.classList.remove('is-spinning');
+    stage.classList.add('result-winner');
+    const winner = [...document.querySelectorAll('.roulette-number')]
+      .find(element => element.textContent === String(result));
+    if (winner) winner.classList.add('is-winner');
+    setTimeout(() => stage.classList.remove('result-winner'), 1000);
   }
   buildRouletteWheel();
   const key = () => 'casino-pending-' + user.id;

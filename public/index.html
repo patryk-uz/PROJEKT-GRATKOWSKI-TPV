@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kasyno Pro</title>
-  <link rel="stylesheet" href="/style.css?v=roulette1">
+  <link rel="stylesheet" href="/style.css?v=roulette2">
   <script defer src="/vendor/supabase.js"></script>
-  <script defer src="/app.js?v=roulette1"></script>
+  <script defer src="/app.js?v=roulette2"></script>
 </head>
 <body>
 <main>
@@ -33,6 +33,7 @@
           <div id="roulette-numbers" class="roulette-numbers"></div>
           <div class="roulette-center"></div>
         </div>
+        <div id="roulette-ball" class="roulette-ball" aria-hidden="true"></div>
       </div>
       <form id="bet-form"><fieldset id="bet-fields"><label>Stawka<input id="bet" type="number" min="1" max="1000" step="1" value="10" required></label><label>Zakład<select id="bet-type"><option value="red">Czerwone (2×)</option><option value="black">Czarne (2×)</option><option value="even">Parzyste (2×)</option><option value="odd">Nieparzyste (2×)</option><option value="number">Dokładny numer (36×)</option></select></label><label id="number-label" hidden>Numer od 0 do 36<input id="number" type="number" min="0" max="36" step="1" value="0"></label></fieldset><p class="muted small">Wypłata zawiera stawkę. Zero przegrywa zakłady na kolor i parzystość.</p><button id="spin" type="submit">Zakręć</button></form>
       <p id="result" class="result" aria-live="polite"></p>
