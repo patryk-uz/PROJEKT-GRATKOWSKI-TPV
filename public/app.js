@@ -359,5 +359,90 @@
   limited(client.auth.getSession()).then(({data,error})=>{
     if(error)throw error;
     if(!authEventSeen)return changeSession(data.session);
-  }).catch(e=>{$('auth-panel').hidden=false;status(message(e));});
+  }).catch(e=>{$('auth-panel').hidden=false;status(message(e));}
+);
+// --- OBSŁUGA WIDOKU I GRY W SLOTY 777 ---
+  const SLOT_SYMBOLS = ['7️⃣', '🍒', '🍋', '🔔', '💎'];
+
+  function showSlots(show) {
+    $('menu').hidden = show;
+    $('slots').hidden = !show;
+  }
+
+  $('open-slots').addEventListener('click', () => showSlots(true));
+  $('slots-back').addEventListener('click', () => showSlots(false));
+
+  async function spinSlots(event) {
+    event.preventDefault();
+    if (busy || !user) return;
+    ensureAudio();
+
+    const bet = Number($('slots-bet').value);
+    if (!Number.isSafeInteger(bet) || bet < 1 || bet > 1000 || balance === null || bet > balance) {
+      status('Stawka musi wynosić 1–1000 żetonów i nie przekraczać salda.');
+      return;
+    }
+
+    const expected = generation;
+    busy = true;
+    controls();
+    status('Losowanie slotów…');
+    $('slots-result').textContent = '';
+
+    const reelEls = [$('reel-1'), $('reel-2'), $('reel-3')];
+    reelEls.forEach(el => el.classList.add('spinning'));
+
+    const animInterval = setInterval(() => {
+      reelEls.forEach(el => {
+        el.textContent = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+      });
+    }, 80);
+
+    try {
+      setTimeout(async () => {
+        clearInterval(animInterval);
+        reelEls.forEach(el => el.classList.remove('spinning'));
+
+        const res1 = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+        const res2 = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+        const res3 = SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+
+        reelEls[0].textContent = res1;
+        reelEls[1].textContent = res2;
+        reelEls[2].textContent = res3;
+
+        let multiplier = 0;
+        if (res1 === '7️⃣' && res2 === '7️⃣' && res3 === '7️⃣') multiplier = 10;
+        else if (res1 === res2 && res2 === res3) multiplier = 5;
+        else if (res1 === '7️⃣' && res2 === '7️⃣' || res2 === '7️⃣' && res3 === '7️⃣' || res1 === '7️⃣' && res3 === '7️⃣') multiplier = 2;
+
+        const payout = bet * multiplier;
+        const netChange = payout - bet;
+        
+        balance += netChange;
+        $('balance').textContent = String(balance);
+        playResultSound(payout > 0);
+
+        if (payout > 0) {
+          $('slots-result').textContent = `Wygrana! Otrzymujesz ${payout} żetonów (Mnożnik ×${multiplier}).`;
+        } else {
+          $('slots-result').textContent = `Brak wygranej. Strata: ${bet} żetonów.`;
+        }
+
+        status('');
+        busy = false;
+        controls();
+      }, 1000);
+
+    } catch (e) {
+      clearInterval(animInterval);
+      reelEls.forEach(el => el.classList.remove('spinning'));
+      status(message(e));
+      busy = false;
+      controls();
+    }
+  }
+
+  $('slots-bet-form').addEventListener('submit', spinSlots);
+  
 })();
