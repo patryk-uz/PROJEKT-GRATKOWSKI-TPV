@@ -16,6 +16,8 @@
 .roulette-number.is-winner{z-index:3;transform:scale(1.42);box-shadow:0 0 0 3px #fde68a,0 0 16px #fde68a}
 .section-heading .actions{margin-top:0}
 .roulette-overlay{position:fixed;z-index:100;inset:0;display:grid;place-items:center;padding:20px;background:rgba(2,6,23,.76);backdrop-filter:blur(8px);animation:overlay-in 180ms ease-out}
+.roulette-overlay.is-leaving{animation:overlay-out 220ms ease-in forwards}
+.roulette-overlay.is-leaving .roulette-overlay-card{animation:result-pop-out 220ms ease-in forwards}
 .roulette-overlay-card{position:relative;width:min(420px,100%);padding:38px 28px 28px;border:2px solid #475569;border-radius:22px;text-align:center;background:linear-gradient(145deg,#1e293b,#0f172a);box-shadow:0 24px 80px rgba(0,0,0,.75);overflow:hidden;animation:result-pop 420ms cubic-bezier(.2,.9,.25,1)}
 .roulette-overlay-card.win{border-color:#facc15;box-shadow:0 24px 80px rgba(0,0,0,.75),0 0 38px rgba(250,204,21,.32)}
 .roulette-overlay-card.loss{border-color:#64748b}
@@ -27,7 +29,9 @@
 .roulette-overlay-card.win #roulette-overlay-close{background:#facc15;color:#3f3000}
 .roulette-confetti{position:absolute;width:8px;height:14px;border-radius:2px;left:var(--x);top:-20px;opacity:.95;animation:confetti-fall var(--duration) linear var(--delay) forwards}
 @keyframes overlay-in{from{opacity:0}to{opacity:1}}
+@keyframes overlay-out{to{opacity:0}}
 @keyframes result-pop{from{opacity:0;transform:scale(.72) translateY(24px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes result-pop-out{to{opacity:0;transform:scale(.84) translateY(18px)}}
 @keyframes confetti-fall{to{transform:translateY(520px) rotate(720deg);opacity:.15}}
 @keyframes pointer-tick{0%,100%{transform:translateX(-50%) rotate(0)}50%{transform:translateX(-50%) rotate(8deg)}}
 @keyframes winner-glow{0%{filter:brightness(1)}35%{filter:brightness(1.35)}100%{filter:brightness(1)}}

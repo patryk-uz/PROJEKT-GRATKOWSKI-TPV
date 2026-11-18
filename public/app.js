@@ -18,6 +18,7 @@
   let wheelRotation = 0;
   let audioContext = null, rouletteTickTimer = null;
   let soundEnabled = localStorage.getItem('casino-sound') !== 'off';
+  let rouletteOverlayTimer = null;
 
   function ensureAudio() {
     if (!soundEnabled) return null;
@@ -85,20 +86,36 @@
     }
   }
 
-  function showRouletteResult(row) {
-    const won = Number(row.payout) > 0;
+  function closeRouletteResult() {
+    const overlay = $('roulette-overlay');
+    if (overlay.hidden) return;
+    if (rouletteOverlayTimer) clearTimeout(rouletteOverlayTimer);
+    rouletteOverlayTimer = null;
+    overlay.classList.add('is-leaving');
+    setTimeout(() => {
+      overlay.classList.remove('is-leaving');
+      overlay.hidden = true;
+      overlay.setAttribute('aria-hidden', 'true');
+    }, 220);
+  }
+
+  function showRouletteResult(row, bet) {
+    const payout = Number(row.payout);
+    const staked = Number(row.bet ?? bet);
+    const won = payout > staked;
+    const lost = payout === 0;
     const overlay = $('roulette-overlay');
     const card = $('roulette-overlay-card');
-    const payout = Number(row.payout);
-    const bet = Number(row.bet);
-    const profit = payout - bet;
+    const profit = payout - staked;
+    if (rouletteOverlayTimer) clearTimeout(rouletteOverlayTimer);
+    overlay.classList.remove('is-leaving');
     card.classList.remove('win', 'loss');
     card.classList.add(won ? 'win' : 'loss');
-    $('roulette-overlay-icon').textContent = won ? '🏆' : '💔';
-    $('roulette-overlay-kicker').textContent = won ? 'Zwycięstwo!' : 'Przegrana';
-    $('roulette-overlay-title').textContent = won ? 'WYGRAŁEŚ' : 'SPRÓBUJ PONOWNIE';
+    $('roulette-overlay-icon').textContent = won ? '🏆' : lost ? '💔' : '➖';
+    $('roulette-overlay-kicker').textContent = won ? 'Zwycięstwo!' : lost ? 'Przegrana' : 'Bez zysku';
+    $('roulette-overlay-title').textContent = won ? 'WYGRAŁEŚ' : lost ? 'SPRÓBUJ PONOWNIE' : 'RUNDY REMIS';
     $('roulette-overlay-detail').textContent =
-      `Wynik: ${row.result} · ${won ? `Wygrana: ${profit} żetonów` : `Strata: ${bet} żetonów`} · Saldo: ${row.balance_after}`;
+      `Wynik: ${row.result} · ${won ? `Zysk: ${profit} żetonów` : lost ? `Strata: ${staked} żetonów` : 'Saldo bez zmian'} · Saldo: ${row.balance_after}`;
     card.querySelectorAll('.roulette-confetti').forEach(element => element.remove());
     if (won) {
       const colors = ['#facc15','#22c55e','#38bdf8','#f472b6','#fb7185'];
@@ -112,7 +129,10 @@
         card.append(confetti);
       }
     }
+    overlay.removeAttribute('aria-hidden');
     overlay.hidden = false;
+    $('roulette-overlay-close').focus({preventScroll:true});
+    rouletteOverlayTimer = setTimeout(closeRouletteResult, 3800);
   }
 
   function updateSoundButton() {
@@ -299,9 +319,9 @@
       localStorage.removeItem(storageKey);pending=null;
       balance=Number(row.balance_after);$('balance').textContent=String(balance);
       await animateRoulette(row.result);
-      const won = Number(row.payout) > 0;
+      const won = Number(row.payout) > Number(row.bet ?? bet);
       playResultSound(won);
-      showRouletteResult(row);
+      showRouletteResult(row, bet);
       const color=row.result===0?'zielony':reds.includes(row.result)?'czerwony':'czarny';
       $('result').textContent=`Wynik: ${row.result} (${color}). Wypłata: ${row.payout} żetonów. Zmiana salda: ${row.payout-row.bet}.`;
       status('');
@@ -323,13 +343,13 @@
     else stopRouletteSound();
   });
   $('roulette-overlay-close').addEventListener('click',()=>{
-    $('roulette-overlay').hidden=true;
+    closeRouletteResult();
   });
   $('roulette-overlay').addEventListener('click',event=>{
-    if(event.target === $('roulette-overlay')) $('roulette-overlay').hidden=true;
+    if(event.target === $('roulette-overlay')) closeRouletteResult();
   });
   document.addEventListener('keydown',event=>{
-    if(event.key==='Escape' && !$('roulette-overlay').hidden) $('roulette-overlay').hidden=true;
+    if(event.key==='Escape' && !$('roulette-overlay').hidden) closeRouletteResult();
   });
   $('refresh').addEventListener('click',async()=>{try {status('');await refresh();}catch(e){status(message(e));}});
   $('logout').addEventListener('click',async()=>{try {const {error}=await limited(client.auth.signOut());if(error)throw error;await changeSession(null);}catch(e){status(message(e));}});
