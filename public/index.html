@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kasyno Pro</title>
-  <link rel="stylesheet" href="/style.css?v=roulette2">
+  <link rel="stylesheet" href="/style.css?v=roulette3">
   <script defer src="/vendor/supabase.js"></script>
-  <script defer src="/app.js?v=roulette2"></script>
+  <script defer src="/app.js?v=roulette3"></script>
 </head>
 <body>
 <main>
@@ -26,7 +26,7 @@
     <aside class="wallet panel"><div><span class="eyebrow">TWÓJ PORTFEL</span><h2><span id="balance">—</span> <small>żetonów</small></h2><p id="account" class="muted"></p></div><div class="actions"><button id="refresh" class="secondary">Odśwież</button><button id="logout" class="secondary">Wyloguj</button></div></aside>
     <section id="menu"><h2>Wybierz grę</h2><div class="grid"><button id="open-roulette" class="card"><span class="icon">🎡</span><strong>Ruletka</strong><span>Wybierz swój zakład</span></button><button class="card" disabled><span class="icon">🎰</span><strong>Slots</strong><span>Wkrótce</span></button><button class="card" disabled><span class="icon">🎲</span><strong>Kolejna gra</strong><span>Wkrótce</span></button></div></section>
     <section id="roulette" class="panel" hidden>
-      <div class="section-heading"><h2>Ruletka</h2><button id="back" class="secondary">← Menu</button></div>
+      <div class="section-heading"><h2>Ruletka</h2><div class="actions"><button id="sound-toggle" class="secondary" type="button" aria-pressed="true">Dźwięk: wł.</button><button id="back" class="secondary">← Menu</button></div></div>
       <div class="roulette-stage" aria-label="Wizualizacja ruletki">
         <div class="roulette-pointer" aria-hidden="true"></div>
         <div id="roulette-wheel" class="roulette-wheel" aria-hidden="true">

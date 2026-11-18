@@ -16,6 +16,79 @@
   const labels = {red:'Czerwone',black:'Czarne',even:'Parzyste',odd:'Nieparzyste',number:'Numer'};
   let user = null, balance = null, pending = null, busy = false, authBusy = false, generation = 0;
   let wheelRotation = 0;
+  let audioContext = null, rouletteTickTimer = null;
+  let soundEnabled = localStorage.getItem('casino-sound') !== 'off';
+
+  function ensureAudio() {
+    if (!soundEnabled) return null;
+    if (!audioContext) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      audioContext = new AudioContextClass();
+    }
+    if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+    return audioContext;
+  }
+
+  function playTone(frequency, duration, volume = 0.05, type = 'triangle', delay = 0) {
+    const context = ensureAudio();
+    if (!context) return;
+    const start = context.currentTime + delay;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(volume, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration);
+  }
+
+  function stopRouletteSound() {
+    if (rouletteTickTimer) clearTimeout(rouletteTickTimer);
+    rouletteTickTimer = null;
+  }
+
+  function startRouletteSound(duration) {
+    stopRouletteSound();
+    if (!soundEnabled) return;
+    ensureAudio();
+    playTone(110, 0.12, 0.025, 'sawtooth');
+    const startedAt = performance.now();
+
+    function tick() {
+      if (!soundEnabled) return;
+      const elapsed = performance.now() - startedAt;
+      const progress = Math.min(elapsed / duration, 1);
+      if (progress >= 1) return;
+      playTone(620 - progress * 240, 0.035, 0.018 + progress * 0.012, 'triangle');
+      const nextDelay = 65 + progress * progress * 170;
+      rouletteTickTimer = setTimeout(tick, nextDelay);
+    }
+    tick();
+  }
+
+  function playResultSound(won) {
+    stopRouletteSound();
+    if (!soundEnabled) return;
+    if (won) {
+      [523.25, 659.25, 783.99].forEach((frequency, index) => {
+        playTone(frequency, 0.22, 0.07, 'triangle', index * 0.09);
+      });
+    } else {
+      playTone(180, 0.22, 0.055, 'sine');
+      playTone(135, 0.28, 0.045, 'sine', 0.16);
+    }
+  }
+
+  function updateSoundButton() {
+    const button = $('sound-toggle');
+    if (!button) return;
+    button.textContent = soundEnabled ? 'Dźwięk: wł.' : 'Dźwięk: wył.';
+    button.setAttribute('aria-pressed', String(soundEnabled));
+  }
 
   function buildRouletteWheel() {
     const wheel = $('roulette-wheel');
@@ -55,6 +128,7 @@
     [...document.querySelectorAll('.roulette-number')].forEach(element => element.classList.remove('is-winner'));
     stage.classList.add('is-spinning');
     const duration = reducedMotion ? 350 : 2800;
+    startRouletteSound(duration);
     const ballFrames = [];
     if (reducedMotion) {
       ballFrames.push({ transform: 'rotate(0deg) translateY(-104px)' });
@@ -90,6 +164,7 @@
     setTimeout(() => stage.classList.remove('result-winner'), 1000);
   }
   buildRouletteWheel();
+  updateSoundButton();
   const key = () => 'casino-pending-' + user.id;
   const message = error => {
     const text = error?.message || 'Nie udało się połączyć. Spróbuj ponownie.';
@@ -168,6 +243,7 @@
   }
   async function spin(event) {
     event.preventDefault(); if(busy || !user) return;
+    ensureAudio();
     const bet=Number($('bet').value), type=$('bet-type').value, number=Number($('number').value);
     if(!pending && (!Number.isSafeInteger(bet)||bet<1||bet>1000||balance===null||bet>balance)) {status('Stawka musi wynosić 1–1000 całych żetonów i nie przekraczać salda.');return;}
     if(!pending && type==='number' && (!Number.isInteger(number)||number<0||number>36)) {status('Wybierz numer od 0 do 36.');return;}
@@ -191,6 +267,7 @@
       localStorage.removeItem(storageKey);pending=null;
       balance=Number(row.balance_after);$('balance').textContent=String(balance);
       await animateRoulette(row.result);
+      playResultSound(Number(row.payout) > Number(row.bet));
       const color=row.result===0?'zielony':reds.includes(row.result)?'czerwony':'czarny';
       $('result').textContent=`Wynik: ${row.result} (${color}). Wypłata: ${row.payout} żetonów. Zmiana salda: ${row.payout-row.bet}.`;
       status('');
@@ -204,6 +281,13 @@
   $('back').addEventListener('click',()=>showGame(false));
   $('bet-type').addEventListener('change',()=>{$('number-label').hidden=$('bet-type').value!=='number';});
   $('bet-form').addEventListener('submit',spin);
+  $('sound-toggle').addEventListener('click',()=>{
+    soundEnabled=!soundEnabled;
+    localStorage.setItem('casino-sound',soundEnabled?'on':'off');
+    updateSoundButton();
+    if(soundEnabled){ensureAudio();playTone(523.25,0.08,0.04,'triangle');}
+    else stopRouletteSound();
+  });
   $('refresh').addEventListener('click',async()=>{try {status('');await refresh();}catch(e){status(message(e));}});
   $('logout').addEventListener('click',async()=>{try {const {error}=await limited(client.auth.signOut());if(error)throw error;await changeSession(null);}catch(e){status(message(e));}});
   // Nie wykonuj zapytań Supabase wewnątrz callbacku Auth (blokada sesji).

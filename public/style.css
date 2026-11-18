@@ -14,6 +14,7 @@
 .roulette-stage.result-winner .roulette-wheel{animation:winner-glow 900ms ease-out}
 .roulette-stage.result-winner .roulette-ball{box-shadow:0 0 12px 4px #fde68a,0 3px 7px rgba(0,0,0,.75)}
 .roulette-number.is-winner{z-index:3;transform:scale(1.42);box-shadow:0 0 0 3px #fde68a,0 0 16px #fde68a}
+.section-heading .actions{margin-top:0}
 @keyframes pointer-tick{0%,100%{transform:translateX(-50%) rotate(0)}50%{transform:translateX(-50%) rotate(8deg)}}
 @keyframes winner-glow{0%{filter:brightness(1)}35%{filter:brightness(1.35)}100%{filter:brightness(1)}}
 @media(prefers-reduced-motion:reduce){
